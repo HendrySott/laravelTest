@@ -2,23 +2,23 @@ FROM php:8.3-fpm
 
 WORKDIR /var/www/html
 
-# Install system packages
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    nginx \
-    supervisor \
     git \
     curl \
     unzip \
     zip \
-    nodejs \
-    npm \
+    nginx \
+    supervisor \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     libonig-dev \
-    libxml2-dev
+    libxml2-dev \
+    nodejs \
+    npm
 
-# PHP extensions
+# Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
     docker-php-ext-install \
     pdo \
@@ -29,23 +29,22 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
     bcmath \
     gd
 
-# Composer
+# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy app
+# Copy project
 COPY . .
 
-# Install dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Install node packages
+# Install Node dependencies
 RUN npm install
 
-# Build Vite assets
+# Build frontend
 RUN npm run build
 
-# Laravel cache
-RUN php artisan config:clear || true
+# Laravel optimizations
 RUN php artisan config:cache || true
 RUN php artisan route:cache || true
 RUN php artisan view:cache || true
@@ -54,8 +53,8 @@ RUN php artisan view:cache || true
 RUN chown -R www-data:www-data storage bootstrap/cache
 
 # Nginx config
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx/default.conf /etc/nginx/sites-enabled/default
 
 EXPOSE 80
 
-CMD sh -c "php-fpm -D && nginx -g 'daemon off;'"
+CMD service nginx start && php-fpm
