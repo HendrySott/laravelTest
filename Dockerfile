@@ -1,55 +1,61 @@
-# ---------- Build frontend ----------
-FROM node:20 AS frontend
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-
-RUN npm run build
-
-
-# ---------- PHP ----------
 FROM php:8.3-fpm
 
 WORKDIR /var/www/html
 
-# System deps
+# Install system packages
 RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
     git \
     curl \
     unzip \
+    zip \
+    nodejs \
+    npm \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
     libonig-dev \
-    libxml2-dev \
-    zip \
-    nginx \
-    supervisor
+    libxml2-dev
 
 # PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Copy app
 COPY . .
 
-# Install PHP deps
+# Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy frontend build
-COPY --from=frontend /app/public/build ./public/build
+# Install node packages
+RUN npm install
+
+# Build Vite assets
+RUN npm run build
+
+# Laravel cache
+RUN php artisan config:clear || true
+RUN php artisan config:cache || true
+RUN php artisan route:cache || true
+RUN php artisan view:cache || true
 
 # Permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
 # Nginx config
-COPY docker/nginx/default.conf /etc/nginx/sites-enabled/default
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
-CMD service nginx start && php-fpm
+CMD sh -c "php-fpm -D && nginx -g 'daemon off;'"
