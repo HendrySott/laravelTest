@@ -2,7 +2,9 @@
 
 [phases.setup]
 # Instalar dependencias necesarias
-apt_pkgs = ["nginx", "php8.3-fpm", "php8.3-cli", "php8.3-mysql", "php8.3-xml", "php8.3-curl", "php8.3-mbstring", "php8.3-bcmath", "php8.3-zip", "composer", "nodejs", "npm"]
+apt_pkgs = ["nginx", "php8.3-fpm", "php8.3-cli", "php8.3-mysql", "php8.3-xml", "php8.3-curl", "php8.3-mbstring", "php8.3-bcmath", "php8.3-zip", "composer", "nodejs", "npm", "supervisor"]
+
+
 
 [phases.install]
 # Instalar dependencias de Laravel y React
