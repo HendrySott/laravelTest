@@ -2,14 +2,13 @@
 
 [phases.setup]
 # Instalar dependencias necesarias
-apt_pkgs = ["nginx", "php8.3-fpm", "php8.3-cli", "php8.3-mysql", "php8.3-xml", "php8.3-curl", "php8.3-mbstring", "php8.3-bcmath", "php8.3-zip", "composer", "nodejs", "npm", "supervisor"]
+apt_pkgs = ["nginx", "php8.3-fpm", "php8.3-cli", "php8.3-mysql", "php8.3-xml", "php8.3-curl", "php8.3-mbstring", "php8.3-bcmath", "php8.3-zip", "composer", "nodejs", "npm", "supervisor","phpenmod mbstring bcmath zip"]
 
 
 
 [phases.install]
-# Instalar dependencias de Laravel y React
 cmds = [
-  "composer install --no-dev --optimize-autoloader",
+  "COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader",
   "npm install --prefix frontend",
   "npm run build --prefix frontend"
 ]
